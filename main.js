@@ -1,3 +1,13 @@
+function hex2rgb(hex) {
+    hex = hex.replace('#', '');
+
+    const r = parseInt(hex.substring(0, 2), 16) / 255.0;
+    const g = parseInt(hex.substring(2, 4), 16) / 255.0;
+    const b = parseInt(hex.substring(4, 6), 16) / 255.0;
+
+    return { r, g, b };
+}
+
 function randomBinary() {
     return Math.round(Math.random());
 }
@@ -7,14 +17,42 @@ function generateRandomNumber(min, max) {
     return rand;
 }
 
-function hex2rgb(hex) {
-    hex = hex.replace('#', '');
+function rotate(x, y, angle) {
+    const x2 = x * Math.cos(radians(angle)) - y * Math.sin(radians(angle));
+    const y2 = y * Math.cos(radians(angle)) + x * Math.sin(radians(angle));
 
-    const r = parseInt(hex.substring(0, 2), 16) / 255.0;
-    const g = parseInt(hex.substring(2, 4), 16) / 255.0;
-    const b = parseInt(hex.substring(4, 6), 16) / 255.0;
+    return { x: x2, y: y2 };
+}
 
-    return { r, g, b };
+function randomPosHelper(posArray, x, y, radius, aspect) {
+    for (let i = 0; i < posArray.length; i++) {
+        const d = Math.sqrt(Math.pow(x - posArray[i].x, 2) + Math.pow( (y - posArray[i].y) / aspect, 2)); 
+        if (d < radius * 2) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function randomPosition(posArray, radius, riverWidth, aspect) {
+    const margin = 0.05;
+
+    let iteration = 0;
+    let randX = null;
+    let randY = null;
+
+    do {
+        randX = randomBinary() ? generateRandomNumber(-1.0 + radius + margin, -riverWidth / 2 - radius - margin) : generateRandomNumber(riverWidth / 2 + radius + margin, 1.0 - radius - margin);
+        randY = generateRandomNumber(-1.0 + radius + margin, 1.0 - radius - margin);
+
+        iteration++;
+    } while (!randomPosHelper(posArray, randX, randY, radius, aspect) && iteration < 1000);
+
+    if (iteration < 1000)
+        return { x: randX, y: randY };
+    else
+        return null;
 }
 
 function polygonArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 1) {
@@ -30,7 +68,7 @@ function polygonArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect
     };
 
     const y = (r, t) => {
-        return ( cY + b * r * Math.sin(radians(t + rotation)) ) * aspect;
+        return cY + ( b * r * Math.sin(radians(t + rotation)) ) * aspect;
     };
 
     for (let i = 0; i < 360; i += angle) {
@@ -50,7 +88,7 @@ function randomPolygonArray(cX, cY, r, edges = 5, rotation = 0, aspect = 1) {
     };
 
     const y = (r, t) => {
-        return ( cY + r * Math.sin(radians(t + rotation)) ) * aspect;
+        return cY + ( r * Math.sin(radians(t + rotation)) ) * aspect;
     };
 
     let totalAngle = 0;
@@ -88,7 +126,7 @@ function rockArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 
     };
 
     const y = (r, t) => {
-        return ( cY + b * r * Math.sin(radians(t + rotation)) ) * aspect;
+        return cY + ( b * r * Math.sin(radians(t + rotation)) ) * aspect;
     };
 
     for (let i = 0; i < 360; i += angle) {
@@ -101,13 +139,6 @@ function rockArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 
     }
 
     return vertices;
-}
-
-function rotate(x, y, angle) {
-    const x2 = x * Math.cos(radians(angle)) - y * Math.sin(radians(angle));
-    const y2 = y * Math.cos(radians(angle)) + x * Math.sin(radians(angle));
-
-    return { x: x2, y: y2 };
 }
 
 function draw(gl, program, mode, vertices, color) {
@@ -150,10 +181,10 @@ function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1) {
     const r_v4 = rotate(a, -b, rotation);
 
     const vR = [];
-    vR.push(vec2(cX + r_v1.x, (cY + r_v1.y) * aspect));
-    vR.push(vec2(cX + r_v2.x, (cY + r_v2.y) * aspect));
-    vR.push(vec2(cX + r_v3.x, (cY + r_v3.y) * aspect));
-    vR.push(vec2(cX + r_v4.x, (cY + r_v4.y) * aspect));
+    vR.push(vec2(cX + r_v1.x, cY + r_v1.y * aspect));
+    vR.push(vec2(cX + r_v2.x, cY + r_v2.y * aspect));
+    vR.push(vec2(cX + r_v3.x, cY + r_v3.y * aspect));
+    vR.push(vec2(cX + r_v4.x, cY + r_v4.y * aspect));
 
     draw(gl, program, gl.TRIANGLE_FAN, vR, hex2rgb('#c55a11'));
 
@@ -163,10 +194,10 @@ function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1) {
     const l_v4 = rotate(0, -b, rotation);
 
     const vL = [];
-    vL.push(vec2(cX + l_v1.x, (cY + l_v1.y) * aspect));
-    vL.push(vec2(cX + l_v2.x, (cY + l_v2.y) * aspect));
-    vL.push(vec2(cX + l_v3.x, (cY + l_v3.y) * aspect));
-    vL.push(vec2(cX + l_v4.x, (cY + l_v4.y) * aspect));
+    vL.push(vec2(cX + l_v1.x, cY + l_v1.y * aspect));
+    vL.push(vec2(cX + l_v2.x, cY + l_v2.y * aspect));
+    vL.push(vec2(cX + l_v3.x, cY + l_v3.y * aspect));
+    vL.push(vec2(cX + l_v4.x, cY + l_v4.y * aspect));
 
     draw(gl, program, gl.TRIANGLE_FAN, vL, hex2rgb('#ed7d31'));
 
@@ -176,10 +207,10 @@ function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1) {
     const s_v4 = rotate(-0.25 * a, -0.75 * b, rotation);
 
     const vS = [];
-    vS.push(vec2(cX + s_v1.x, (cY + s_v1.y) * aspect));
-    vS.push(vec2(cX + s_v2.x, (cY + s_v2.y) * aspect));
-    vS.push(vec2(cX + s_v3.x, (cY + s_v3.y) * aspect));
-    vS.push(vec2(cX + s_v4.x, (cY + s_v4.y) * aspect));
+    vS.push(vec2(cX + s_v1.x, cY + s_v1.y * aspect));
+    vS.push(vec2(cX + s_v2.x, cY + s_v2.y * aspect));
+    vS.push(vec2(cX + s_v3.x, cY + s_v3.y * aspect));
+    vS.push(vec2(cX + s_v4.x, cY + s_v4.y * aspect));
 
     draw(gl, program, gl.TRIANGLE_FAN, vS, hex2rgb('#000000'));
 }
@@ -238,20 +269,6 @@ function drawRiver(gl, program, width, aspect = 1) {
     draw(gl, program, gl.TRIANGLE_FAN, river, hex2rgb('#5b9bd5'));
 }
 
-function randomPosition(posArray, radius, riverWidth, LorR) {
-    const randX = LorR ? generateRandomNumber(-1.0 + radius, -riverWidth / 2 - radius) : generateRandomNumber(riverWidth / 2 + radius, 1.0 - radius);
-    const randY = generateRandomNumber(-1.0 + radius, 1.0 - radius);
-
-    for (let i = 0; i < posArray.length; i++) {
-        const d = Math.sqrt(Math.pow(randX - posArray[i].x, 2) + Math.pow(randY - posArray[i].y, 2)); 
-        if (d < radius * 2) {
-            return randomPosition(posArray, radius, riverWidth, LorR);
-        }
-    }
-
-    return { x: randX, y: randY };
-}
-
 window.onload = () => {
     const canvas = document.querySelector( 'canvas' );
     const aspect = canvas.width / canvas.height;
@@ -275,28 +292,33 @@ window.onload = () => {
     const radius = 0.05;
     const posArray = [];
 
-    for (let i = 0; i < 3; i++) {
-        const pos = randomPosition(posArray, radius, riverWidth, randomBinary());
+    for (let i = 0; i < 4; i++) {
+        const pos = randomPosition(posArray, radius, riverWidth, aspect);
         const rot = Math.floor(Math.random() * 360);
-        drawHouse(gl, program, pos.x, pos.y, 1.5, radius, rot, aspect);
-        posArray.push(pos);
+
+        if (pos !== null) {
+            drawHouse(gl, program, pos.x, pos.y, 1.5, radius, rot, aspect);
+            posArray.push(pos);
+        }
     }
 
     for (let i = 0; i < 2; i++) {
-        const pos = randomPosition(posArray, radius, riverWidth, randomBinary());
+        const pos = randomPosition(posArray, radius, riverWidth, aspect);
         const rot = Math.floor(Math.random() * 360);
-        drawRock(gl, program, pos.x, pos.y, radius, rot, aspect);
-        posArray.push(pos);
+
+        if (pos !== null) {
+            drawRock(gl, program, pos.x, pos.y, radius, rot, aspect);
+            posArray.push(pos);
+        }
     }
 
-    for (let i = 0; i < 5; i++) {
-        const pos = randomPosition(posArray, radius, riverWidth, randomBinary());
+    for (let i = 0; i < 3; i++) {
+        const pos = randomPosition(posArray, radius, riverWidth, aspect);
         const rot = Math.floor(Math.random() * 360);
-        drawTree(gl, program, pos.x, pos.y, radius, rot, aspect);
-        posArray.push(pos);
+
+        if (pos !== null) {
+            drawTree(gl, program, pos.x, pos.y, radius, rot, aspect);
+            posArray.push(pos);
+        }
     }
-
-
-    // const randPen = randomPolygonArray(0.0, 0.0, 0.1, 8, 0.0, aspect);
-    // draw(gl, program, gl.LINE_LOOP, randPen, hex2rgb('#477992'));
 };
