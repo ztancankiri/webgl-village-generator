@@ -1,337 +1,8 @@
+import { hex2rgb, randomPosition, typeSelector, downloadObjectAsJson } from './village-generator/toolkit.js';
+import { drawRiver, drawHouse, drawRock, drawTree } from './village-generator/drawer.js';
+
 let entityData = {};
 let attractorData = [];
-
-function hex2rgb(hex) {
-    hex = hex.replace('#', '');
-
-    const r = parseInt(hex.substring(0, 2), 16) / 255.0;
-    const g = parseInt(hex.substring(2, 4), 16) / 255.0;
-    const b = parseInt(hex.substring(4, 6), 16) / 255.0;
-
-    return { r, g, b };
-}
-
-function randomBinary() {
-    return Math.round(Math.random());
-}
-
-function generateRandomNumber(min, max) {
-    const rand = Math.random() * (max - min) + min;
-    return rand;
-}
-
-function rotate(x, y, angle) {
-    const x2 = x * Math.cos(radians(angle)) - y * Math.sin(radians(angle));
-    const y2 = y * Math.cos(radians(angle)) + x * Math.sin(radians(angle));
-
-    return { x: x2, y: y2 };
-}
-
-function randomPosHelper(posArray, x, y, radius, aspect) {
-    for (let i = 0; i < posArray.length; i++) {
-        const d = Math.sqrt(Math.pow(x - posArray[i].x, 2) + Math.pow( (y - posArray[i].y) / aspect, 2)); 
-        if (d < radius * 2) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-function randomPosition(posArray, radius, riverWidth, aspect) {
-    const margin = 0.05;
-
-    let iteration = 0;
-    let randX = null;
-    let randY = null;
-
-    do {
-        randX = randomBinary() ? generateRandomNumber(-1.0 + radius + margin, -riverWidth / 2 - radius - margin) : generateRandomNumber(riverWidth / 2 + radius + margin, 1.0 - radius - margin);
-        randY = generateRandomNumber(-1.0 + radius + margin, 1.0 - radius - margin);
-
-        iteration++;
-    } while (!randomPosHelper(posArray, randX, randY, radius, aspect) && iteration < 1000);
-
-    if (iteration < 1000)
-        return { x: randX, y: randY };
-    else
-        return null;
-}
-
-function polygonArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 1) {
-    const angle = 360 / edges;
-    const vertices = [];
-
-    const radians = degree => {
-        return degree * (Math.PI / 180);
-    };
-
-    const x = (r, t) => {
-        return cX + a * r * Math.cos(radians(t + rotation));
-    };
-
-    const y = (r, t) => {
-        return cY + ( b * r * Math.sin(radians(t + rotation)) ) * aspect;
-    };
-
-    for (let i = 0; i < 360; i += angle) {
-        vertices.push(vec2(x(r, i), y(r, i)));
-    }
-
-    return vertices;
-}
-
-function randomPolygonArray(cX, cY, r, edges = 5, rotation = 0, aspect = 1) {
-    const radians = degree => {
-        return degree * (Math.PI / 180);
-    };
-
-    const x = (r, t) => {
-        return cX + r * Math.cos(radians(t + rotation));
-    };
-
-    const y = (r, t) => {
-        return cY + ( r * Math.sin(radians(t + rotation)) ) * aspect;
-    };
-
-    let totalAngle = 0;
-    let maxAngleInc = 360 / edges;
-
-    const vertices = [];
-
-    for (let i = 0; i < edges; i++) {
-        let angle = 0;
-
-        if (i === edges - 1) {
-            angle = 360 - totalAngle;
-        }
-        else {
-            angle = generateRandomNumber(maxAngleInc / 2, maxAngleInc);
-        }
-
-        totalAngle += angle;
-        vertices.push(vec2(x(r, totalAngle), y(r, totalAngle)));
-    }
-
-    return vertices;
-}
-
-function rockArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 1) {
-    const angle = 360 / edges;
-    const vertices = [];
-
-    const radians = degree => {
-        return degree * (Math.PI / 180);
-    }
-
-    const x = (r, t) => {
-        return cX + a * r * Math.cos(radians(t + rotation));
-    };
-
-    const y = (r, t) => {
-        return cY + ( b * r * Math.sin(radians(t + rotation)) ) * aspect;
-    };
-
-    for (let i = 0; i < 360; i += angle) {
-        if (i > 180)
-            vertices.push(vec2(x(r, i + 20), y(r, i + 20)));
-        else if (i < 180 && i > 70)
-            vertices.push(vec2(x(r, i), y(r, i)));
-        else
-        vertices.push(vec2(x(r, i - 10), y(r, i + 20)));
-    }
-
-    return vertices;
-}
-
-function draw(gl, program, mode, vertices, color) {
-    const colors = [];
-    for (let i = 0; i < vertices.length; i++) {
-        colors.push(vec3(color.r, color.g, color.b));
-    }
-
-    const colorBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, colorBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW );
-	
-    const vColor = gl.getAttribLocation( program, 'vColor' );
-    gl.vertexAttribPointer( vColor, 3, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( vColor );
-
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, positionBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW );
-
-    const vPosition = gl.getAttribLocation( program, 'vPosition' );
-    gl.vertexAttribPointer( vPosition, 2, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( vPosition );
-
-    // Render
-    gl.drawArrays( mode, 0, vertices.length );
-}
-
-function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1) {
-    const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
-    draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
-    r -= 0.01;
-
-    const a = Math.sqrt( Math.pow(r * 2, 2) / (Math.pow(p, 2) + 1) ) / 2;
-    const b = p * a;
-
-    const r_v1 = rotate(a, b, rotation);
-    const r_v2 = rotate(0, b, rotation);
-    const r_v3 = rotate(0, -b, rotation);
-    const r_v4 = rotate(a, -b, rotation);
-
-    const vR = [];
-    vR.push(vec2(cX + r_v1.x, cY + r_v1.y * aspect));
-    vR.push(vec2(cX + r_v2.x, cY + r_v2.y * aspect));
-    vR.push(vec2(cX + r_v3.x, cY + r_v3.y * aspect));
-    vR.push(vec2(cX + r_v4.x, cY + r_v4.y * aspect));
-
-    draw(gl, program, gl.TRIANGLE_FAN, vR, hex2rgb('#c55a11'));
-
-    const l_v1 = rotate(0, b, rotation);
-    const l_v2 = rotate(-a, b, rotation);
-    const l_v3 = rotate(-a, -b, rotation);
-    const l_v4 = rotate(0, -b, rotation);
-
-    const vL = [];
-    vL.push(vec2(cX + l_v1.x, cY + l_v1.y * aspect));
-    vL.push(vec2(cX + l_v2.x, cY + l_v2.y * aspect));
-    vL.push(vec2(cX + l_v3.x, cY + l_v3.y * aspect));
-    vL.push(vec2(cX + l_v4.x, cY + l_v4.y * aspect));
-
-    draw(gl, program, gl.TRIANGLE_FAN, vL, hex2rgb('#ed7d31'));
-
-    const s_v1 = rotate(-0.25 * a, -0.25 * b, rotation);
-    const s_v2 = rotate(-0.75 * a, -0.25 * b, rotation);
-    const s_v3 = rotate(-0.75 * a, -0.75 * b, rotation);
-    const s_v4 = rotate(-0.25 * a, -0.75 * b, rotation);
-
-    const vS = [];
-    vS.push(vec2(cX + s_v1.x, cY + s_v1.y * aspect));
-    vS.push(vec2(cX + s_v2.x, cY + s_v2.y * aspect));
-    vS.push(vec2(cX + s_v3.x, cY + s_v3.y * aspect));
-    vS.push(vec2(cX + s_v4.x, cY + s_v4.y * aspect));
-
-    draw(gl, program, gl.TRIANGLE_FAN, vS, hex2rgb('#000000'));
-}
-
-function drawTree(gl, program, cX, cY, r, rotation = 0, aspect = 1) {
-    const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
-    draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
-
-    const leaves = polygonArray( cX, cY, 1, 1, r / 1.5, 50, 0, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, leaves, hex2rgb('#548235'));
-
-    const f_r = r / 15;
-    const step = f_r / 2;
-
-    const r_f1 = rotate(1 * step, 1 * step, rotation);
-    const f1 = polygonArray( cX + r_f1.x, cY + r_f1.y, 1, 1, f_r, 50, 0, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, f1, hex2rgb('#ff0000'));
-
-    const r_f2 = rotate(-3 * step, 10 * step, rotation);
-    const f2 = polygonArray( cX + r_f2.x, cY + r_f2.y, 1, 1, f_r, 50, 0, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, f2, hex2rgb('#ff0000'));
-
-    const r_f3 = rotate(-10 * step, -3 * step, rotation);
-    const f3 = polygonArray( cX  + r_f3.x, cY + r_f3.y, 1, 1, f_r, 50, 0, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, f3, hex2rgb('#ff0000'));
-
-    const r_f4 = rotate(-3 * step, -10 * step, rotation);
-    const f4 = polygonArray( cX + r_f4.x, cY + r_f4.y, 1, 1, f_r, 50, 0, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, f4, hex2rgb('#ff0000'));
-
-    const r_f5 = rotate(7 * step, -10 * step, rotation);
-    const f5 = polygonArray( cX + r_f5.x, cY + r_f5.y, 1, 1, f_r, 50, 0, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, f5, hex2rgb('#ff0000'));
-
-    const r_f6 = rotate(10 * step, 1 * step, rotation);
-    const f6 = polygonArray( cX + r_f6.x, cY + r_f6.y, 1, 1, f_r, 50, 0, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, f6, hex2rgb('#ff0000'));
-}
-
-function drawRock(gl, program, cX, cY, r, rotation = 0, aspect = 1) {
-    const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
-    draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
-
-    const rock = rockArray( cX, cY, 1, 1, r / 1.5, 5, rotation, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, rock, hex2rgb('#a5a5a5'));
-}
-
-function drawRiver(gl, program, width, aspect = 1) {
-    const river = [];
-
-    river.push(vec2(width / 2, aspect));
-    river.push(vec2(-width / 2, aspect));
-    river.push(vec2(-width / 2, -aspect));
-    river.push(vec2(width / 2, -aspect));
-
-    draw(gl, program, gl.TRIANGLE_FAN, river, hex2rgb('#5b9bd5'));
-}
-
-function typeSelector(x, y) {
-    let houseScore = 0;
-    let rockScore = 0;
-    let treeScore = 0;
-
-    for (let i = 0; i < attractorData.length; i++) {
-        const score = 1.0 / Math.sqrt(Math.pow(attractorData[i].pos.x - x, 2) + Math.pow(attractorData[i].pos.y - y, 2));
-
-        if (attractorData[i].type === 'house') {
-            houseScore += score;
-        }
-        else if (attractorData[i].type === 'rock') {
-            rockScore += score;
-        }
-        else if (attractorData[i].type === 'tree') {
-            treeScore += score;
-        }
-    }
-
-    let houseEnd = houseScore;
-    let rockEnd = houseEnd + rockScore;
-    let treeEnd = rockEnd + treeScore;
-
-    const typeRand = generateRandomNumber(0, treeEnd);
-
-    if (typeRand >= 0 && typeRand < houseEnd)
-        return 'house';
-    else if (typeRand >= houseEnd && typeRand < rockEnd)
-        return 'rock';
-    else if (typeRand >= rockEnd && typeRand <= treeEnd)
-        return 'tree';
-}
-
-function render(gl, program, aspect) {
-    gl.clear( gl.COLOR_BUFFER_BIT );
-
-    drawRiver(gl, program, entityData.riverWidth, aspect);
-
-    for (let i = 0; i < entityData.houses.length; i++) {
-        drawHouse(gl, program, entityData.houses[i].pos.x, entityData.houses[i].pos.y, 1.5, entityData.houses[i].radius, entityData.houses[i].rot, aspect);
-    }
-
-    for (let i = 0; i < entityData.rocks.length; i++) {
-        drawRock(gl, program, entityData.rocks[i].pos.x, entityData.rocks[i].pos.y, entityData.rocks[i].radius, entityData.rocks[i].rot, aspect);
-    }
-
-    for (let i = 0; i < entityData.trees.length; i++) {
-        drawTree(gl, program, entityData.trees[i].pos.x, entityData.trees[i].pos.y, entityData.trees[i].radius, entityData.trees[i].rot, aspect);
-    }
-}
-
-function downloadObjectAsJson(exportObj, exportName) {
-    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
-    var downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", exportName + ".json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-}
 
 function generateEntityData(count, aspect) {
     entityData = {};
@@ -352,7 +23,7 @@ function generateEntityData(count, aspect) {
         if (pos !== null) {
             posArray.push(pos);
 
-            const type = typeSelector(pos.x, pos.y);
+            const type = typeSelector(attractorData, pos.x, pos.y);
 
             if (type === 'house') {
                 entityData.houses.push({pos: pos, rot: rot, radius: radius});
@@ -367,21 +38,25 @@ function generateEntityData(count, aspect) {
     }
 }
 
-window.onload = () => {
-    const canvas = document.querySelector( 'canvas' );
-    const aspect = canvas.width / canvas.height;
-    const gl = WebGLUtils.setupWebGL( canvas );
+function render(gl, program, aspect) {
+    gl.clear( gl.COLOR_BUFFER_BIT );
 
-    if (!gl) return alert( "WebGL isn't available" );
-    
-    gl.viewport( 0, 0, canvas.width, canvas.height );
+    drawRiver(gl, program, entityData.riverWidth, aspect);
 
-    const terrainColor = hex2rgb('#70ad47');
-    gl.clearColor( terrainColor.r, terrainColor.g, terrainColor.b, 1.0 );   
-     
-    const program = initShaders( gl, 'vertex-shader', 'fragment-shader' );
-    gl.useProgram( program );
+    for (let i = 0; i < entityData.houses.length; i++) {
+        drawHouse(gl, program, entityData.houses[i].pos.x, entityData.houses[i].pos.y, 1.5, entityData.houses[i].radius, entityData.houses[i].rot, aspect);
+    }
 
+    for (let i = 0; i < entityData.rocks.length; i++) {
+        drawRock(gl, program, entityData.rocks[i].pos.x, entityData.rocks[i].pos.y, entityData.rocks[i].radius, entityData.rocks[i].rot, aspect);
+    }
+
+    for (let i = 0; i < entityData.trees.length; i++) {
+        drawTree(gl, program, entityData.trees[i].pos.x, entityData.trees[i].pos.y, entityData.trees[i].radius, entityData.trees[i].rot, aspect);
+    }
+}
+
+function bindEvents(gl, program, canvas, aspect) {
     const jsonFile = document.querySelector( '#jsonFile' );
     jsonFile.addEventListener("change", () => {
         const file = jsonFile.files[0];
@@ -431,7 +106,26 @@ window.onload = () => {
         generateEntityData(entityCount.value, aspect);
         render(gl, program, aspect);
     });
+}
 
-    generateEntityData(entityCount.value, aspect);
-    render(gl, program, aspect);
+window.onload = () => {
+    const canvas = document.querySelector( 'canvas' );
+    
+    const aspect = canvas.width / canvas.height;
+    const gl = WebGLUtils.setupWebGL( canvas );
+
+    if (!gl) return alert( "WebGL isn't available" );
+    
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+
+    const terrainColor = hex2rgb('#70ad47');
+    gl.clearColor( terrainColor.r, terrainColor.g, terrainColor.b, 1.0 );   
+     
+    const program = initShaders( gl, 'vertex-shader', 'fragment-shader' );
+    gl.useProgram( program );
+
+    bindEvents(gl, program, canvas, aspect);
+
+    // Empty Canvas
+    gl.clear( gl.COLOR_BUFFER_BIT );
 };
