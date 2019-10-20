@@ -1,3 +1,6 @@
+let entityData = {};
+let attractorData = [];
+
 function hex2rgb(hex) {
     hex = hex.replace('#', '');
 
@@ -269,6 +272,101 @@ function drawRiver(gl, program, width, aspect = 1) {
     draw(gl, program, gl.TRIANGLE_FAN, river, hex2rgb('#5b9bd5'));
 }
 
+function typeSelector(x, y) {
+    let houseScore = 0;
+    let rockScore = 0;
+    let treeScore = 0;
+
+    for (let i = 0; i < attractorData.length; i++) {
+        const score = 1.0 / Math.sqrt(Math.pow(attractorData[i].pos.x - x, 2) + Math.pow(attractorData[i].pos.y - y, 2));
+
+        if (attractorData[i].type === 'house') {
+            houseScore += score;
+        }
+        else if (attractorData[i].type === 'rock') {
+            rockScore += score;
+        }
+        else if (attractorData[i].type === 'tree') {
+            treeScore += score;
+        }
+    }
+
+    let houseEnd = houseScore;
+    let rockEnd = houseEnd + rockScore;
+    let treeEnd = rockEnd + treeScore;
+
+    const typeRand = generateRandomNumber(0, treeEnd);
+
+    if (typeRand >= 0 && typeRand < houseEnd)
+        return 'house';
+    else if (typeRand >= houseEnd && typeRand < rockEnd)
+        return 'rock';
+    else if (typeRand >= rockEnd && typeRand <= treeEnd)
+        return 'tree';
+}
+
+function render(gl, program, aspect) {
+    gl.clear( gl.COLOR_BUFFER_BIT );
+
+    drawRiver(gl, program, entityData.riverWidth, aspect);
+
+    for (let i = 0; i < entityData.houses.length; i++) {
+        drawHouse(gl, program, entityData.houses[i].pos.x, entityData.houses[i].pos.y, 1.5, entityData.houses[i].radius, entityData.houses[i].rot, aspect);
+    }
+
+    for (let i = 0; i < entityData.rocks.length; i++) {
+        drawRock(gl, program, entityData.rocks[i].pos.x, entityData.rocks[i].pos.y, entityData.rocks[i].radius, entityData.rocks[i].rot, aspect);
+    }
+
+    for (let i = 0; i < entityData.trees.length; i++) {
+        drawTree(gl, program, entityData.trees[i].pos.x, entityData.trees[i].pos.y, entityData.trees[i].radius, entityData.trees[i].rot, aspect);
+    }
+}
+
+function downloadObjectAsJson(exportObj, exportName) {
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", exportName + ".json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function generateEntityData(count, aspect) {
+    entityData = {};
+    const posArray = [];
+    const radius = 0.05;
+
+    const riverWidth = Math.random() * 0.5 + 0.1;
+    entityData.riverWidth = riverWidth;
+
+    entityData.houses = [];
+    entityData.rocks = [];
+    entityData.trees = [];
+
+    for (let i = 0; i < count; i++) {
+        const pos = randomPosition(posArray, radius, riverWidth, aspect);
+        const rot = Math.floor(Math.random() * 360);
+
+        if (pos !== null) {
+            posArray.push(pos);
+
+            const type = typeSelector(pos.x, pos.y);
+
+            if (type === 'house') {
+                entityData.houses.push({pos: pos, rot: rot, radius: radius});
+            }
+            else if (type === 'rock') {
+                entityData.rocks.push({pos: pos, rot: rot, radius: radius});
+            }
+            else if (type === 'tree') {
+                entityData.trees.push({pos: pos, rot: rot, radius: radius});
+            }
+        }
+    }
+}
+
 window.onload = () => {
     const canvas = document.querySelector( 'canvas' );
     const aspect = canvas.width / canvas.height;
@@ -284,41 +382,56 @@ window.onload = () => {
     const program = initShaders( gl, 'vertex-shader', 'fragment-shader' );
     gl.useProgram( program );
 
-    gl.clear( gl.COLOR_BUFFER_BIT );
+    const jsonFile = document.querySelector( '#jsonFile' );
+    jsonFile.addEventListener("change", () => {
+        const file = jsonFile.files[0];
+        const fileType = /json.*/;
 
-    const riverWidth = Math.random() * 0.5 + 0.1;
-    drawRiver(gl, program, riverWidth, aspect);
-
-    const radius = 0.05;
-    const posArray = [];
-
-    for (let i = 0; i < 4; i++) {
-        const pos = randomPosition(posArray, radius, riverWidth, aspect);
-        const rot = Math.floor(Math.random() * 360);
-
-        if (pos !== null) {
-            drawHouse(gl, program, pos.x, pos.y, 1.5, radius, rot, aspect);
-            posArray.push(pos);
+        if (file.type.match(fileType)) {
+            const reader = new FileReader();
+            
+            reader.onload = () => {
+                const content = reader.result;
+                const data = JSON.parse(content);
+                entityData = data.entityData;
+                attractorData = data.attractorData;
+                render(gl, program, aspect);
+            }
+            
+            reader.readAsText(file);	
+        } else {
+            alert ("File not supported!");
         }
-    }
+    });
 
-    for (let i = 0; i < 2; i++) {
-        const pos = randomPosition(posArray, radius, riverWidth, aspect);
-        const rot = Math.floor(Math.random() * 360);
+    const saveButton = document.querySelector( '#saveButton' );
+    saveButton.addEventListener("click", () => {
+        downloadObjectAsJson({entityData, attractorData}, "data");
+    });
 
-        if (pos !== null) {
-            drawRock(gl, program, pos.x, pos.y, radius, rot, aspect);
-            posArray.push(pos);
-        }
-    }
+    const loadButton = document.querySelector( '#loadButton' );
+    loadButton.addEventListener("click", event => {
+        jsonFile.click();
+    });
 
-    for (let i = 0; i < 3; i++) {
-        const pos = randomPosition(posArray, radius, riverWidth, aspect);
-        const rot = Math.floor(Math.random() * 360);
+    const entityCount = document.querySelector( '#entityCount' );
+    entityCount.addEventListener("keyup", () => {
+        generateEntityData(entityCount.value, aspect);
+        render(gl, program, aspect);
+    });
 
-        if (pos !== null) {
-            drawTree(gl, program, pos.x, pos.y, radius, rot, aspect);
-            posArray.push(pos);
-        }
-    }
+    canvas.addEventListener("click", event => {
+        const attractor = document.querySelector( '#attractorType' ).value;
+
+        const x = -1 + 2 * event.clientX / canvas.width;
+        const y = -1 + 2 * (canvas.height - event.clientY) / canvas.height;
+
+        attractorData.push({type: attractor, pos: {x, y}});
+
+        generateEntityData(entityCount.value, aspect);
+        render(gl, program, aspect);
+    });
+
+    generateEntityData(entityCount.value, aspect);
+    render(gl, program, aspect);
 };

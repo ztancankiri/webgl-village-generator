@@ -32,6 +32,17 @@
         <script type="text/javascript" src="main.js"></script>
     </head>
     <body>
+        <button id="saveButton">Save</button>
+        <button id="loadButton">Load</button>
+        <input type="file" id="jsonFile" style="display: none;" />
+        <input type="text" id="entityCount" value="20" />
+
+        <select id="attractorType" size="7">
+            <option value="house" selected>House Attractor</option>
+            <option value="rock">Rock Attractor</option>
+            <option value="tree">Tree Attractor</option>
+        </select>
+        <br><br>
         <canvas width="1280" height="720">
             Oops ... your browser doesn't support the HTML5 canvas element
         </canvas>
