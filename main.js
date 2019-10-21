@@ -4,6 +4,7 @@ import { drawRiver, drawHouse, drawRock, drawTree } from './village-generator/dr
 let entityData = {};
 let attractorData = [];
 let debug = true;
+let currentAttractor = null;
 
 function generateEntityData(count, aspect) {
     entityData = {};
@@ -73,7 +74,7 @@ function bindEvents(gl, program, canvas, aspect) {
                 attractorData = data.attractorData;
                 
                 debug = data.debug;
-                debugButton.textContent = debug ? "DEBUG: ON" : "DEBUG: OFF";
+                debugButton.textContent = debug ? "Debug: ON" : "Debug: OFF";
                 render(gl, program, aspect);
             }
             
@@ -100,12 +101,12 @@ function bindEvents(gl, program, canvas, aspect) {
     });
 
     canvas.addEventListener("click", event => {
-        const attractor = document.querySelector( '#attractorType' ).value;
-
         const x = -1 + 2 * event.clientX / canvas.width;
         const y = -1 + 2 * (canvas.height - event.clientY) / canvas.height;
 
-        attractorData.push({type: attractor, pos: {x, y}});
+        attractorData.push({type: currentAttractor, pos: {x, y}});
+
+        console.log(attractorData);
 
         generateEntityData(entityCount.value, aspect);
         render(gl, program, aspect);
@@ -114,14 +115,35 @@ function bindEvents(gl, program, canvas, aspect) {
     const debugButton = document.querySelector( '#debugButton' );
     debugButton.addEventListener("click", event => {
         if (debugButton.textContent.includes("ON")) {
-            debugButton.textContent = "DEBUG: OFF";
+            debugButton.textContent = "Debug: OFF";
             debug = false;
         }
         else {
-            debugButton.textContent = "DEBUG: ON";
+            debugButton.textContent = "Debug: ON";
             debug = true;
         }
         render(gl, program, aspect);
+    });
+
+    $('#houseAttractor').click(() => {
+        currentAttractor = 'house';
+        $('#houseAttractor').addClass("active");
+        $('#rockAttractor').removeClass("active");
+        $('#treeAttractor').removeClass("active");
+    });
+
+    $('#rockAttractor').click(() => {
+        currentAttractor = 'rock';
+        $('#houseAttractor').removeClass("active");
+        $('#rockAttractor').addClass("active");
+        $('#treeAttractor').removeClass("active");
+    });
+
+    $('#treeAttractor').click(() => {
+        currentAttractor = 'tree';
+        $('#houseAttractor').removeClass("active");
+        $('#rockAttractor').removeClass("active");
+        $('#treeAttractor').addClass("active");
     });
 }
 

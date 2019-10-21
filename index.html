@@ -3,6 +3,14 @@
     <head>
         <title>Top-down Village Generator with WebGL</title>
 
+        <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+        <script type="text/javascript" src="js/semantic.min.js"></script>
+
+        <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css'>
+        <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/components/icon.min.css'>
+
+        <link rel='stylesheet' href='css/style.css'>
+
         <script id="vertex-shader" type="x-shader/x-vertex">
             attribute vec4 vPosition;
             attribute vec4 vColor;
@@ -32,21 +40,48 @@
         <script type="module" src="main.js"></script>
     </head>
     <body>
-        <button id="saveButton">Save</button>
-        <button id="loadButton">Load</button>
-        <input type="file" id="jsonFile" style="display: none;" />
-        <input type="number" id="entityCount" value="20" />
 
-        <select id="attractorType" size="7">
-            <option value="house" selected>House Attractor</option>
-            <option value="rock">Rock Attractor</option>
-            <option value="tree">Tree Attractor</option>
-        </select>
+    <div class="ui two column grid">
+        <div class="row">
+            <div class="eleven wide column">
+                <canvas width="1280" height="720">
+                    Oops ... your browser doesn't support the HTML5 canvas element
+                </canvas>
+            </div>
+            <div class="five wide column">
+                <div class="ui icon buttons">
+                    <button class="ui button" id="houseAttractor">
+                        <i class="home icon"></i>
+                    </button>
+                    <button class="ui button" id="treeAttractor">
+                        <i class="tree icon"></i>
+                    </button>
+                    <button class="ui button" id="rockAttractor">
+                        <i class="gem icon"></i>
+                    </button>
+                </div>
+                <br>
+                <br>
+                <button id="saveButton" class="ui button">Save</button>
+                <button id="loadButton" class="ui button">Load</button><br>
+                <input type="file" id="jsonFile" style="display: none;" />
 
-        <button id="debugButton">DEBUG: ON</button>
-        <br><br>
-        <canvas width="1280" height="720">
-            Oops ... your browser doesn't support the HTML5 canvas element
-        </canvas>
+                <br>
+        
+                <div class="ui left icon input">
+                    <input id="entityCount" type="number" placeholder="Entity Count" value="20">
+                    <i class="hashtag icon"></i>
+                </div><br>
+                <br>
+        
+                <button id="debugButton" class="ui button">Debug: ON</button>
+            </div>
+        </div>
+    </div>
+
+
+        
+
+        
     </body>
 </html>
