@@ -1,5 +1,5 @@
-import { hex2rgb, randomPosition, typeSelector, downloadObjectAsJson } from './village-generator/toolkit.js';
-import { drawRiver, drawHouse, drawRock, drawTree } from './village-generator/drawer.js';
+import { hex2rgb, randomPosition, typeSelector, downloadObjectAsJson } from './toolkit.js';
+import { drawRiver, drawHouse, drawRock, drawTree } from './drawer.js';
 
 let entityData = {};
 let attractorData = [];
@@ -59,8 +59,7 @@ function render(gl, program, aspect) {
 }
 
 function bindEvents(gl, program, canvas, aspect) {
-    const jsonFile = document.querySelector( '#jsonFile' );
-    jsonFile.addEventListener("change", () => {
+    $('#jsonFile').bind('change', () => {
         const file = jsonFile.files[0];
         const fileType = /json.*/;
 
@@ -81,26 +80,18 @@ function bindEvents(gl, program, canvas, aspect) {
             reader.readAsText(file);	
         } else {
             alert ("File not supported!");
-        }
+        }           
     });
 
-    const saveButton = document.querySelector( '#saveButton' );
-    saveButton.addEventListener("click", () => {
+    $('#saveButton').click(() => {
         downloadObjectAsJson({entityData, attractorData, debug}, "data");
     });
 
-    const loadButton = document.querySelector( '#loadButton' );
-    loadButton.addEventListener("click", event => {
-        jsonFile.click();
+    $('#loadButton').click(() => {
+        $('#jsonFile').click();
     });
 
-    const entityCount = document.querySelector( '#entityCount' );
-    entityCount.addEventListener("keyup", () => {
-        generateEntityData(entityCount.value, aspect);
-        render(gl, program, aspect);
-    });
-
-    canvas.addEventListener("click", event => {
+    $('canvas').click(event => {
         const x = -1 + 2 * event.clientX / canvas.width;
         const y = -1 + 2 * (canvas.height - event.clientY) / canvas.height;
 
@@ -112,18 +103,27 @@ function bindEvents(gl, program, canvas, aspect) {
         render(gl, program, aspect);
     });
 
-    const debugButton = document.querySelector( '#debugButton' );
-    debugButton.addEventListener("click", event => {
-        if (debugButton.textContent.includes("ON")) {
-            debugButton.textContent = "Debug: OFF";
+    $('#debugButton').click(event => {
+        if ($('#debugButton').hasClass('green')) {
+            $('#debugButton').removeClass('green');
+            $('#debugButton').addClass('red');
             debug = false;
         }
         else {
-            debugButton.textContent = "Debug: ON";
+            $('#debugButton').removeClass('red');
+            $('#debugButton').addClass('green');
             debug = true;
         }
         render(gl, program, aspect);
     });
+
+    $('#entityCount').bind('keyup mouseup', event => {
+        generateEntityData(event.target.value, aspect);
+        render(gl, program, aspect);            
+    });
+    
+    currentAttractor = 'house';
+    $('#houseAttractor').addClass("active");
 
     $('#houseAttractor').click(() => {
         currentAttractor = 'house';
