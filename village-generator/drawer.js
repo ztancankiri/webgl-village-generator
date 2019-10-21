@@ -38,9 +38,11 @@ export function drawRiver(gl, program, width, aspect = 1) {
     draw(gl, program, gl.TRIANGLE_FAN, river, hex2rgb('#5b9bd5'));
 }
 
-export function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1) {
-    const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
-    draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
+export function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1, debug) {
+    if (debug) {
+        const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
+        draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
+    }
     r -= 0.01;
 
     const a = Math.sqrt( Math.pow(r * 2, 2) / (Math.pow(p, 2) + 1) ) / 2;
@@ -86,9 +88,11 @@ export function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1) {
     draw(gl, program, gl.TRIANGLE_FAN, vS, hex2rgb('#000000'));
 }
 
-export function drawTree(gl, program, cX, cY, r, rotation = 0, aspect = 1) {
-    const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
-    draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
+export function drawTree(gl, program, cX, cY, r, rotation = 0, aspect = 1, debug) {
+    if (debug) {
+        const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
+        draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
+    }
 
     const leaves = polygonArray( cX, cY, 1, 1, r / 1.5, 50, 0, aspect );
     draw(gl, program, gl.TRIANGLE_FAN, leaves, hex2rgb('#548235'));
@@ -121,10 +125,12 @@ export function drawTree(gl, program, cX, cY, r, rotation = 0, aspect = 1) {
     draw(gl, program, gl.TRIANGLE_FAN, f6, hex2rgb('#ff0000'));
 }
 
-export function drawRock(gl, program, cX, cY, r, rotation = 0, aspect = 1) {
-    const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
-    draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
-
+export function drawRock(gl, program, cX, cY, r, rotation = 0, aspect = 1, debug) {
+    if (debug) {
+        const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
+        draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
+    }
+    
     const rock = rockArray( cX, cY, 1, 1, r / 1.5, 5, rotation, aspect );
     draw(gl, program, gl.TRIANGLE_FAN, rock, hex2rgb('#a5a5a5'));
 }

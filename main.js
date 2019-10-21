@@ -3,6 +3,7 @@ import { drawRiver, drawHouse, drawRock, drawTree } from './village-generator/dr
 
 let entityData = {};
 let attractorData = [];
+let debug = true;
 
 function generateEntityData(count, aspect) {
     entityData = {};
@@ -44,15 +45,15 @@ function render(gl, program, aspect) {
     drawRiver(gl, program, entityData.riverWidth, aspect);
 
     for (let i = 0; i < entityData.houses.length; i++) {
-        drawHouse(gl, program, entityData.houses[i].pos.x, entityData.houses[i].pos.y, 1.5, entityData.houses[i].radius, entityData.houses[i].rot, aspect);
+        drawHouse(gl, program, entityData.houses[i].pos.x, entityData.houses[i].pos.y, 1.5, entityData.houses[i].radius, entityData.houses[i].rot, aspect, debug);
     }
 
     for (let i = 0; i < entityData.rocks.length; i++) {
-        drawRock(gl, program, entityData.rocks[i].pos.x, entityData.rocks[i].pos.y, entityData.rocks[i].radius, entityData.rocks[i].rot, aspect);
+        drawRock(gl, program, entityData.rocks[i].pos.x, entityData.rocks[i].pos.y, entityData.rocks[i].radius, entityData.rocks[i].rot, aspect, debug);
     }
 
     for (let i = 0; i < entityData.trees.length; i++) {
-        drawTree(gl, program, entityData.trees[i].pos.x, entityData.trees[i].pos.y, entityData.trees[i].radius, entityData.trees[i].rot, aspect);
+        drawTree(gl, program, entityData.trees[i].pos.x, entityData.trees[i].pos.y, entityData.trees[i].radius, entityData.trees[i].rot, aspect, debug);
     }
 }
 
@@ -70,6 +71,9 @@ function bindEvents(gl, program, canvas, aspect) {
                 const data = JSON.parse(content);
                 entityData = data.entityData;
                 attractorData = data.attractorData;
+                
+                debug = data.debug;
+                debugButton.textContent = debug ? "DEBUG: ON" : "DEBUG: OFF";
                 render(gl, program, aspect);
             }
             
@@ -81,7 +85,7 @@ function bindEvents(gl, program, canvas, aspect) {
 
     const saveButton = document.querySelector( '#saveButton' );
     saveButton.addEventListener("click", () => {
-        downloadObjectAsJson({entityData, attractorData}, "data");
+        downloadObjectAsJson({entityData, attractorData, debug}, "data");
     });
 
     const loadButton = document.querySelector( '#loadButton' );
@@ -104,6 +108,19 @@ function bindEvents(gl, program, canvas, aspect) {
         attractorData.push({type: attractor, pos: {x, y}});
 
         generateEntityData(entityCount.value, aspect);
+        render(gl, program, aspect);
+    });
+
+    const debugButton = document.querySelector( '#debugButton' );
+    debugButton.addEventListener("click", event => {
+        if (debugButton.textContent.includes("ON")) {
+            debugButton.textContent = "DEBUG: OFF";
+            debug = false;
+        }
+        else {
+            debugButton.textContent = "DEBUG: ON";
+            debug = true;
+        }
         render(gl, program, aspect);
     });
 }
