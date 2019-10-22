@@ -5,36 +5,40 @@ let entityData = {};
 let attractorData = [];
 let debug = true;
 let currentAttractor = null;
+let riverMin = null;
+let riverMax = null;
 
 function generateEntityData(count, aspect) {
     entityData = {};
     const posArray = [];
     const radius = 0.05;
 
-    const riverWidth = Math.random() * 0.5 + 0.1;
+    const riverWidth = Math.random() * riverMin + riverMax;
     entityData.riverWidth = riverWidth;
 
     entityData.houses = [];
     entityData.rocks = [];
     entityData.trees = [];
 
-    for (let i = 0; i < count; i++) {
-        const pos = randomPosition(posArray, radius, riverWidth, aspect);
-        const rot = Math.floor(Math.random() * 360);
-
-        if (pos !== null) {
-            posArray.push(pos);
-
-            const type = typeSelector(attractorData, pos.x, pos.y);
-
-            if (type === 'house') {
-                entityData.houses.push({pos: pos, rot: rot, radius: radius});
-            }
-            else if (type === 'rock') {
-                entityData.rocks.push({pos: pos, rot: rot, radius: radius});
-            }
-            else if (type === 'tree') {
-                entityData.trees.push({pos: pos, rot: rot, radius: radius});
+    if (attractorData.length > 0) {
+        for (let i = 0; i < count; i++) {
+            const pos = randomPosition(posArray, radius, riverWidth, aspect);
+            const rot = Math.floor(Math.random() * 360);
+    
+            if (pos !== null) {
+                posArray.push(pos);
+    
+                const type = typeSelector(attractorData, pos.x, pos.y);
+    
+                if (type === 'house') {
+                    entityData.houses.push({pos: pos, rot: rot, radius: radius});
+                }
+                else if (type === 'rock') {
+                    entityData.rocks.push({pos: pos, rot: rot, radius: radius});
+                }
+                else if (type === 'tree') {
+                    entityData.trees.push({pos: pos, rot: rot, radius: radius});
+                }
             }
         }
     }
@@ -118,8 +122,10 @@ function bindEvents(gl, program, canvas, aspect) {
     });
 
     $('#entityCount').bind('keyup mouseup', event => {
-        generateEntityData(event.target.value, aspect);
-        render(gl, program, aspect);            
+        if (currentAttractor !== null) {
+            generateEntityData(event.target.value, aspect);
+            render(gl, program, aspect);
+        }     
     });
     
     currentAttractor = 'house';
@@ -144,6 +150,26 @@ function bindEvents(gl, program, canvas, aspect) {
         $('#houseAttractor').removeClass("active");
         $('#rockAttractor').removeClass("active");
         $('#treeAttractor').addClass("active");
+    });
+
+    $('#river-range').slider({
+        range: true,
+        min: 0,
+        max: canvas.width,
+        values: [ canvas.width / 2 - (canvas.width / 5), canvas.width / 2 + (canvas.width / 5) ],
+        slide: function( event, ui ) {
+            riverMin = ui.values[0] / canvas.width;
+            riverMax = ui.values[1] / canvas.width;
+            $('#riverText').text('River Width Range: [' + ui.values[0] + ', ' + ui.values[1] + ']');
+        }
+    });
+    $('#riverText').text('River Width Range: [' + $('#river-range').slider('values', 0) + ', ' + $('#river-range').slider('values', 1) + ']');
+
+    $('#river-range').bind('mouseup', () => {
+        if (currentAttractor !== null) {
+            generateEntityData(event.target.value, aspect);
+            render(gl, program, aspect);
+        }
     });
 }
 

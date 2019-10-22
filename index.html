@@ -9,6 +9,10 @@
         <link rel='stylesheet prefetch' href='css/semantic-ui/semantic.min.css'>
         <link rel='stylesheet prefetch' href='css/semantic-ui/components/icon.min.css'>
 
+
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
         <link rel='stylesheet' href='css/style.css'>
 
         <script id="vertex-shader" type="x-shader/x-vertex">
@@ -56,11 +60,16 @@
 
                         <button id="debugButton" class="ui right floated green icon button"><i class="bug icon"></i></button>
                     </div>
+
+                    <div class="row">
+                        <span id="riverText">River Width Range: [500, 800]</span>
+                        <div id="river-range"></div>
+                    </div>
             
                     <div class="row">
                         <div class="ui fluid left icon input">
                             <i class="hashtag icon"></i>
-                            <input id="entityCount" type="number" placeholder="Entity Count" value="20">
+                            <input id="entityCount" type="number" placeholder="Entity Count" value="50">
                         </div>
                     </div>
             

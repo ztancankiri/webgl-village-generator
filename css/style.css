@@ -10,3 +10,7 @@ canvas {
 .row {
     margin-bottom: 5px;
 }
+
+.ui-widget-header {
+    background: #5b9bd5;
+}
