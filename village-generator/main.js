@@ -1,5 +1,6 @@
-import { hex2rgb, randomPosition, typeSelector, downloadObjectAsJson } from './toolkit.js';
+import { hex2rgb, randomPosition, typeSelector, downloadObjectAsJson, generateRandomNumber } from './toolkit.js';
 import { drawRiver, drawHouse, drawRock, drawTree } from './drawer.js';
+import { randomPolygonArray } from './vertexGenerator.js';
 
 let entityData = {};
 let attractorData = [];
@@ -12,8 +13,8 @@ function generateEntityData(count, aspect) {
     entityData = {};
     const posArray = [];
     const radius = 0.05;
-
-    const riverWidth = Math.random() * riverMin + riverMax;
+    
+    const riverWidth = generateRandomNumber(riverMin, riverMax);
     entityData.riverWidth = riverWidth;
 
     entityData.houses = [];
@@ -23,7 +24,7 @@ function generateEntityData(count, aspect) {
     if (attractorData.length > 0) {
         for (let i = 0; i < count; i++) {
             const pos = randomPosition(posArray, radius, riverWidth, aspect);
-            const rot = Math.floor(Math.random() * 360);
+            const rot = generateRandomNumber(0, 360);
     
             if (pos !== null) {
                 posArray.push(pos);
@@ -34,7 +35,9 @@ function generateEntityData(count, aspect) {
                     entityData.houses.push({pos: pos, rot: rot, radius: radius});
                 }
                 else if (type === 'rock') {
-                    entityData.rocks.push({pos: pos, rot: rot, radius: radius});
+                    const edges = Math.floor(generateRandomNumber(4, 7));
+                    const corners = randomPolygonArray(pos.x, pos.y, radius - 0.01, edges, rot, aspect);
+                    entityData.rocks.push({pos: pos, rot: rot, radius: radius, corners: corners});
                 }
                 else if (type === 'tree') {
                     entityData.trees.push({pos: pos, rot: rot, radius: radius});
@@ -47,18 +50,26 @@ function generateEntityData(count, aspect) {
 function render(gl, program, aspect) {
     gl.clear( gl.COLOR_BUFFER_BIT );
 
+    console.log(entityData);
+
     drawRiver(gl, program, entityData.riverWidth, aspect);
 
-    for (let i = 0; i < entityData.houses.length; i++) {
-        drawHouse(gl, program, entityData.houses[i].pos.x, entityData.houses[i].pos.y, 1.5, entityData.houses[i].radius, entityData.houses[i].rot, aspect, debug);
+    if (Array.isArray(entityData.houses)) {
+        for (let i = 0; i < entityData.houses.length; i++) {
+            drawHouse(gl, program, entityData.houses[i].pos.x, entityData.houses[i].pos.y, 1.5, entityData.houses[i].radius, entityData.houses[i].rot, aspect, debug);
+        }
     }
 
-    for (let i = 0; i < entityData.rocks.length; i++) {
-        drawRock(gl, program, entityData.rocks[i].pos.x, entityData.rocks[i].pos.y, entityData.rocks[i].radius, entityData.rocks[i].rot, aspect, debug);
+    if (Array.isArray(entityData.rocks)) {
+        for (let i = 0; i < entityData.rocks.length; i++) {
+            drawRock(gl, program, entityData.rocks[i].pos.x, entityData.rocks[i].pos.y, entityData.rocks[i].radius, entityData.rocks[i].corners, aspect, debug);
+        }
     }
 
-    for (let i = 0; i < entityData.trees.length; i++) {
-        drawTree(gl, program, entityData.trees[i].pos.x, entityData.trees[i].pos.y, entityData.trees[i].radius, entityData.trees[i].rot, aspect, debug);
+    if (Array.isArray(entityData.trees)) {
+        for (let i = 0; i < entityData.trees.length; i++) {
+            drawTree(gl, program, entityData.trees[i].pos.x, entityData.trees[i].pos.y, entityData.trees[i].radius, entityData.trees[i].rot, aspect, debug);
+        }
     }
 }
 
@@ -96,15 +107,15 @@ function bindEvents(gl, program, canvas, aspect) {
     });
 
     $('canvas').click(event => {
-        const x = -1 + 2 * event.clientX / canvas.width;
-        const y = -1 + 2 * (canvas.height - event.clientY) / canvas.height;
-
-        attractorData.push({type: currentAttractor, pos: {x, y}});
-
-        console.log(attractorData);
-
-        generateEntityData(entityCount.value, aspect);
-        render(gl, program, aspect);
+        if (currentAttractor !== null) {
+            const x = -1 + 2 * event.clientX / canvas.width;
+            const y = -1 + 2 * (canvas.height - event.clientY) / canvas.height;
+    
+            attractorData.push({type: currentAttractor, pos: {x, y}});
+    
+            generateEntityData(entityCount.value, aspect);
+            render(gl, program, aspect);
+        }
     });
 
     $('#debugButton').click(event => {
@@ -127,9 +138,6 @@ function bindEvents(gl, program, canvas, aspect) {
             render(gl, program, aspect);
         }     
     });
-    
-    currentAttractor = 'house';
-    $('#houseAttractor').addClass("active");
 
     $('#houseAttractor').click(() => {
         currentAttractor = 'house';
@@ -163,13 +171,32 @@ function bindEvents(gl, program, canvas, aspect) {
             $('#riverText').text('River Width Range: [' + ui.values[0] + ', ' + ui.values[1] + ']');
         }
     });
-    $('#riverText').text('River Width Range: [' + $('#river-range').slider('values', 0) + ', ' + $('#river-range').slider('values', 1) + ']');
 
     $('#river-range').bind('mouseup', () => {
         if (currentAttractor !== null) {
-            generateEntityData(event.target.value, aspect);
+            generateEntityData($('#entityCount').val(), aspect);
             render(gl, program, aspect);
         }
+        else {
+            generateEntityData(0, aspect);
+        }
+        render(gl, program, aspect);
+    });
+
+    $('#generateButton').click(() => {
+        if (currentAttractor !== null) {
+            generateEntityData($('#entityCount').val(), aspect);
+        }
+        else {
+            generateEntityData(0, aspect);
+        }
+        render(gl, program, aspect);
+    });
+
+    $('#resetButton').click(() => {
+        attractorData = [];
+        generateEntityData(0, aspect);
+        render(gl, program, aspect);
     });
 }
 
@@ -191,6 +218,13 @@ window.onload = () => {
 
     bindEvents(gl, program, canvas, aspect);
 
+    riverMin = $('#river-range').slider('values', 0) / canvas.width;
+    riverMax = $('#river-range').slider('values', 1) / canvas.width;
+    $('#riverText').text('River Width Range: [' + $('#river-range').slider('values', 0) + ', ' + $('#river-range').slider('values', 1) + ']');
+
     // Empty Canvas
     gl.clear( gl.COLOR_BUFFER_BIT );
+
+    generateEntityData(0, aspect);
+    render(gl, program, aspect);
 };

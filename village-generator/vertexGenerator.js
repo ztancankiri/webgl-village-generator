@@ -1,10 +1,8 @@
+import { generateRandomNumber } from './toolkit.js';
+
 export function polygonArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 1) {
     const angle = 360 / edges;
     const vertices = [];
-
-    const radians = degree => {
-        return degree * (Math.PI / 180);
-    };
 
     const x = (r, t) => {
         return cX + a * r * Math.cos(radians(t + rotation));
@@ -22,10 +20,6 @@ export function polygonArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0,
 }
 
 export function randomPolygonArray(cX, cY, r, edges = 5, rotation = 0, aspect = 1) {
-    const radians = degree => {
-        return degree * (Math.PI / 180);
-    };
-
     const x = (r, t) => {
         return cX + r * Math.cos(radians(t + rotation));
     };
@@ -59,10 +53,6 @@ export function randomPolygonArray(cX, cY, r, edges = 5, rotation = 0, aspect = 
 export function rockArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 1) {
     const angle = 360 / edges;
     const vertices = [];
-
-    const radians = degree => {
-        return degree * (Math.PI / 180);
-    }
 
     const x = (r, t) => {
         return cX + a * r * Math.cos(radians(t + rotation));

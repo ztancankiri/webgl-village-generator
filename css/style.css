@@ -14,3 +14,7 @@ canvas {
 .ui-widget-header {
     background: #5b9bd5;
 }
+
+.ui.button {
+    margin: 0 0 0 0;
+}

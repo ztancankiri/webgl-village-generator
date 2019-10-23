@@ -1,5 +1,5 @@
 import { hex2rgb, rotate } from './toolkit.js';
-import { polygonArray, rockArray } from './vertexGenerator.js';
+import { polygonArray, rockArray, randomPolygonArray } from './vertexGenerator.js';
 
 export function draw(gl, program, mode, vertices, color) {
     const colors = [];
@@ -125,12 +125,11 @@ export function drawTree(gl, program, cX, cY, r, rotation = 0, aspect = 1, debug
     draw(gl, program, gl.TRIANGLE_FAN, f6, hex2rgb('#ff0000'));
 }
 
-export function drawRock(gl, program, cX, cY, r, rotation = 0, aspect = 1, debug) {
+export function drawRock(gl, program, cX, cY, r, corners, aspect = 1, debug) {
     if (debug) {
         const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
         draw(gl, program, gl.LINE_LOOP, circle, hex2rgb('#477992'));
     }
-    
-    const rock = rockArray( cX, cY, 1, 1, r / 1.5, 5, rotation, aspect );
-    draw(gl, program, gl.TRIANGLE_FAN, rock, hex2rgb('#a5a5a5'));
+
+    draw(gl, program, gl.TRIANGLE_FAN, corners, hex2rgb('#a5a5a5'));
 }
