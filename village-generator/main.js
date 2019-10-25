@@ -88,7 +88,15 @@ function bindEvents(gl, program, canvas, aspect) {
                 attractorData = data.attractorData;
                 
                 debug = data.debug;
-                debugButton.textContent = debug ? "Debug: ON" : "Debug: OFF";
+                if (debug) {
+                    $('#debugButton').removeClass('red');
+                    $('#debugButton').addClass('green');
+                }
+                else {
+                    $('#debugButton').removeClass('green');
+                    $('#debugButton').addClass('red');
+                }
+
                 render(gl, program, aspect);
             }
             
