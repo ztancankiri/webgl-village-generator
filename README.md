@@ -1,2 +1,5 @@
-# webgl-village-generator
-[CS-465] Assignment 1: Semi-procedural, Top-down Village Generator with WebGL
+# Semi-procedural, Top-down Village Generator with WebGL
+![image](preview.png)
+
+## Assignment
+[Assignment.pdf](assignment.pdf)
