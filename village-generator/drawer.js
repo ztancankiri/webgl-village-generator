@@ -1,6 +1,19 @@
+/**
+ * This file handles the draw operations.
+ * It uses the WebGL buffers etc.
+ */
+
 import { hex2rgb, rotate } from './toolkit.js';
 import { polygonArray, rockArray, randomPolygonArray } from './vertexGenerator.js';
 
+/**
+ * This function draws the vertices with the given color.
+ * @param {*} gl WebGL instance.
+ * @param {*} program Program instance.
+ * @param {*} mode Draw mode.
+ * @param {Float32Array} vertices Vertices array.
+ * @param {JSON} color The color.
+ */
 export function draw(gl, program, mode, vertices, color) {
     const colors = [];
     for (let i = 0; i < vertices.length; i++) {
@@ -27,6 +40,13 @@ export function draw(gl, program, mode, vertices, color) {
     gl.drawArrays( mode, 0, vertices.length );
 }
 
+/**
+ * This function draws a river.
+ * @param {*} gl WebGL instance.
+ * @param {*} program Program instance.
+ * @param {Float} width The width of the river.
+ * @param {Float} aspect The aspect of the canvas edges.
+ */
 export function drawRiver(gl, program, width, aspect = 1) {
     const river = [];
 
@@ -38,6 +58,18 @@ export function drawRiver(gl, program, width, aspect = 1) {
     draw(gl, program, gl.TRIANGLE_FAN, river, hex2rgb('#5b9bd5'));
 }
 
+/**
+ * This function draw a house.
+ * @param {*} gl WebGL instance.
+ * @param {*} program Program instance.
+ * @param {Float} cX The X coordinate of the center.
+ * @param {Float} cY The Y coordinate of the center.
+ * @param {Float} p The ratio between edges of a house.
+ * @param {Float} r The radius.
+ * @param {Float} rotation The rotation angle.
+ * @param {Float} aspect The aspect of the canvas edges.
+ * @param {Boolean} debug The debug condition.
+ */
 export function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1, debug) {
     if (debug) {
         const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
@@ -88,6 +120,17 @@ export function drawHouse(gl, program, cX, cY, p, r, rotation = 0, aspect = 1, d
     draw(gl, program, gl.TRIANGLE_FAN, vS, hex2rgb('#000000'));
 }
 
+/**
+ * This function draws a tree.
+ * @param {*} gl WebGL instance.
+ * @param {*} program Program instance.
+ * @param {Float} cX The X coordinate of the center.
+ * @param {Float} cY The Y coordinate of the center.
+ * @param {Float} r The radius.
+ * @param {Float} rotation The rotation angle.
+ * @param {Float} aspect The aspect of the canvas edges.
+ * @param {Boolean} debug The debug condition.
+ */
 export function drawTree(gl, program, cX, cY, r, rotation = 0, aspect = 1, debug) {
     if (debug) {
         const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );
@@ -125,6 +168,17 @@ export function drawTree(gl, program, cX, cY, r, rotation = 0, aspect = 1, debug
     draw(gl, program, gl.TRIANGLE_FAN, f6, hex2rgb('#ff0000'));
 }
 
+/**
+ * This function draw a rock.
+ * @param {*} gl WebGL instance.
+ * @param {*} program Program instance.
+ * @param {Float} cX The X coordinate of the center.
+ * @param {Float} cY The Y coordinate of the center.
+ * @param {Float} r The radius.
+ * @param {Float32Array} corners The array of the positions of the corner verticies.
+ * @param {Float} aspect The aspect of the canvas edges.
+ * @param {Boolean} debug The debug condition.
+ */
 export function drawRock(gl, program, cX, cY, r, corners, aspect = 1, debug) {
     if (debug) {
         const circle = polygonArray( cX, cY, 1, 1, r, 50, 0, aspect );

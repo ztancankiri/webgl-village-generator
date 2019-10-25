@@ -1,5 +1,20 @@
+/**
+ * This file handles the geometric representations of the entities.
+ */
+
 import { generateRandomNumber } from './toolkit.js';
 
+/**
+ * This function generates an array which has vertices of the desired polygon.
+ * @param {Float} cX The X coordinate of the center.
+ * @param {Float} cY The Y coordinate of the center.
+ * @param {Float} a The constant multiplier of X.
+ * @param {Float} b The constant multiplier of Y.
+ * @param {Float} r The radius.
+ * @param {Int} edges The number of edges.
+ * @param {Float} rotation The rotation angle.
+ * @param {Float} aspect The aspect of the canvas edges.
+ */
 export function polygonArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 1) {
     const angle = 360 / edges;
     const vertices = [];
@@ -19,6 +34,15 @@ export function polygonArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0,
     return vertices;
 }
 
+/**
+ * This function generates a random array which has vertices of the desired polygon.
+ * @param {Float} cX The X coordinate of the center.
+ * @param {Float} cY The Y coordinate of the center.
+ * @param {Float} r The radius.
+ * @param {Int} edges The number of edges.
+ * @param {Float} rotation The rotation angle.
+ * @param {Float} aspect The aspect of the canvas edges.
+ */
 export function randomPolygonArray(cX, cY, r, edges = 5, rotation = 0, aspect = 1) {
     const x = (r, t) => {
         return cX + r * Math.cos(radians(t + rotation));
@@ -50,6 +74,17 @@ export function randomPolygonArray(cX, cY, r, edges = 5, rotation = 0, aspect = 
     return vertices;
 }
 
+/**
+ * This function generates an array which has vertices of a rock entity.
+ * @param {Float} cX The X coordinate of the center.
+ * @param {Float} cY The Y coordinate of the center.
+ * @param {Float} a The constant multiplier of X.
+ * @param {Float} b The constant multiplier of Y.
+ * @param {Float} r The radius.
+ * @param {Int} edges The number of edges.
+ * @param {Float} rotation The rotation angle.
+ * @param {Float} aspect The aspect of the canvas edges.
+ */
 export function rockArray(cX, cY, a = 1, b = 1, r, edges = 100, rotation = 0, aspect = 1) {
     const angle = 360 / edges;
     const vertices = [];

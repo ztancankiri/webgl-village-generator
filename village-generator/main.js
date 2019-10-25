@@ -1,7 +1,13 @@
+/**
+ * This file carries the all logic of the program.
+ * It is the start activity of the program.
+ */
+
 import { hex2rgb, randomPosition, typeSelector, downloadObjectAsJson, generateRandomNumber } from './toolkit.js';
 import { drawRiver, drawHouse, drawRock, drawTree } from './drawer.js';
 import { randomPolygonArray } from './vertexGenerator.js';
 
+// The global variables.
 let entityData = {};
 let attractorData = [];
 let debug = true;
@@ -9,6 +15,11 @@ let currentAttractor = null;
 let riverMin = null;
 let riverMax = null;
 
+/**
+ * This function generates entity data.
+ * @param {Int} count The entity count.
+ * @param {Float} aspect The aspect of the canvas edges.
+ */
 function generateEntityData(count, aspect) {
     entityData = {};
     const posArray = [];
@@ -47,6 +58,12 @@ function generateEntityData(count, aspect) {
     }
 }
 
+/**
+ * This function renders all the scene using the entity data.
+ * @param {*} gl WebGL instance.
+ * @param {*} program Program instance.
+ * @param {Float} aspect The aspect of the canvas edges.
+ */
 function render(gl, program, aspect) {
     gl.clear( gl.COLOR_BUFFER_BIT );
 
@@ -73,6 +90,13 @@ function render(gl, program, aspect) {
     }
 }
 
+/**
+ * This function binds the UI events to the DOM elements.
+ * @param {*} gl WebGL instance.
+ * @param {*} program Program instance.
+ * @param {DOMElement} canvas The canvas object.
+ * @param {Float} aspect The aspect of the canvas edges.
+ */
 function bindEvents(gl, program, canvas, aspect) {
     $('#jsonFile').bind('change', () => {
         const file = jsonFile.files[0];
